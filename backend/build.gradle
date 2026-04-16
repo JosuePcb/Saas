@@ -1,0 +1,113 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.11'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com'
+version = '0.0.1-SNAPSHOT'
+description = 'SaaS for micrologistics'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('springAiVersion', "1.1.2")
+	set('springModulithVersion', "1.4.8")
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
+	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+	implementation 'org.springframework.modulith:spring-modulith-starter-core'
+	implementation 'org.springframework.modulith:spring-modulith-starter-jpa'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	runtimeOnly 'org.postgresql:postgresql'
+	developmentOnly 'org.springframework.ai:spring-ai-spring-boot-docker-compose'
+	runtimeOnly 'org.springframework.modulith:spring-modulith-actuator'
+	runtimeOnly 'org.springframework.modulith:spring-modulith-observability'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.springframework.ai:spring-ai-spring-boot-testcontainers'
+	testImplementation 'org.springframework.modulith:spring-modulith-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// JWT (autenticación)
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    // MapStruct (mapeo entidad ↔ DTO)
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    // Si usas Lombok + MapStruct juntos, necesitas:
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    // MinIO (almacenamiento de archivos S3-compatible)
+    implementation 'io.minio:minio:8.5.14'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.modulith:spring-modulith-bom:${springModulithVersion}"
+		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+	}
+}
+
+def forbiddenAiDependencyFragments = ['openai', 'langchain4j']
+
+tasks.register('verifyGeminiOnlyDependencies') {
+	group = 'verification'
+	description = 'Fails build when OpenAI/LangChain dependencies are declared'
+
+	doLast {
+		Set<String> forbiddenDependencies = new LinkedHashSet<>()
+		configurations.each { configuration ->
+			configuration.allDependencies.each { dependency ->
+				String ga = "${dependency.group ?: ''}:${dependency.name ?: ''}".toLowerCase()
+				if (forbiddenAiDependencyFragments.any { fragment -> ga.contains(fragment) }) {
+					forbiddenDependencies.add("${configuration.name} -> ${dependency.group}:${dependency.name}")
+				}
+			}
+		}
+
+		if (!forbiddenDependencies.isEmpty()) {
+			throw new GradleException(
+					"Gemini-only policy violated. Remove forbidden AI dependencies: ${forbiddenDependencies.join(', ')}"
+			)
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyGeminiOnlyDependencies')
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

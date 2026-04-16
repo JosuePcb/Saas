@@ -1,0 +1,22 @@
+# Reglas locales del backend (Java/Gradle)
+# El resto de reglas compartidas viven en /.gitignore
+
+HELP.md
+
+# Metadatos de IDE específicos del backend
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+*.iws
+*.iml
+*.ipr
+
+# NetBeans específicos del módulo
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/

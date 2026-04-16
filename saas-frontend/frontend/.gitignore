@@ -1,0 +1,5 @@
+# Reglas locales del frontend (Vite)
+# Reglas compartidas (logs, node_modules, dist, IDE, etc.) en /.gitignore
+
+# Variables específicas de entorno local del frontend
+*.local

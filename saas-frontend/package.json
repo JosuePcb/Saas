@@ -1,0 +1,9 @@
+{
+  "name": "saas-frontend-container-deprecated",
+  "private": true,
+  "version": "0.0.0",
+  "description": "DEPRECATED: este nivel no es la fuente de verdad. Usa saas-frontend/frontend.",
+  "scripts": {
+    "preinstall": "node -e \"console.error('❌ No instales dependencias en saas-frontend/. Usa: npm --prefix saas-frontend/frontend install'); process.exit(1)\""
+  }
+}
