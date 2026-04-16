@@ -66,3 +66,7 @@ npm run backend:test
 - No ejecutes `npm install` dentro de `saas-frontend/` (nivel intermedio).
 - Usa siempre la raíz del repo con los scripts anteriores.
 - Los archivos `.env*` están ignorados por seguridad.
+
+## Complemento para onboarding junior
+
+- Ver `ONBOARDING_FRONTEND_JUNIOR.md` para checklist de primer día y troubleshooting rápido.
