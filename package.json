@@ -1,0 +1,13 @@
+{
+  "name": "saas-integracion",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Orquestación simple de frontend y backend desde raíz",
+  "scripts": {
+    "frontend:install": "npm --prefix saas-frontend/frontend install",
+    "frontend:dev": "npm --prefix saas-frontend/frontend run dev",
+    "frontend:build": "npm --prefix saas-frontend/frontend run build",
+    "backend:dev": "backend\\gradlew.bat -p backend bootRun",
+    "backend:test": "backend\\gradlew.bat -p backend test"
+  }
+}

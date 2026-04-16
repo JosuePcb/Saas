@@ -1,0 +1,66 @@
+# ==============================
+# Monorepo raíz (backend + frontend)
+# ==============================
+
+# --- Secretos y configuración local ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.env
+
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Archivos temporales / paquetes ---
+*.zip
+*.tmp
+*.temp
+nul
+
+# --- SO / IDE ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# --- Node / Frontend (multi-paquete) ---
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.cache/
+**/.turbo/
+**/.next/
+**/.nuxt/
+**/coverage/
+**/*.tsbuildinfo
+
+# --- Python (si aplica en utilidades/front) ---
+**/__pycache__/
+**/*.py[cod]
+.venv/
+venv/
+
+# --- Backend Java / Gradle ---
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/out/
+
+# --- Convención del proyecto ---
+.atl/
+
+# --- Frontend: evitar doble lockfile en contenedor intermedio ---
+saas-frontend/package-lock.json
