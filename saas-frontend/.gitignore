@@ -1,5 +1,0 @@
-# Reglas locales del contenedor frontend
-# Reglas globales están en /.gitignore
-#
-# Sin reglas locales adicionales: se eliminó duplicación
-# porque `*.zip` ya está cubierto en el .gitignore raíz.

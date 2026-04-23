@@ -223,7 +223,7 @@ function LineChartSVG() {
 // ─── Dashboard principal ──────────────────────────────────────────────────────
 export default function DashboardPage() {
     const { user } = useAuthStore()
-    const businessName = MOCK_BUSINESS[user?.tenantId ?? ''] ?? 'Tu Negocio'
+    const businessName = MOCK_BUSINESS[user?.id ?? ''] ?? 'Tu Negocio'
     const dateStr = new Date().toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long' })
 
     const enCamino = MOCK_PINS.filter(p => p.color === '#EC4899').length

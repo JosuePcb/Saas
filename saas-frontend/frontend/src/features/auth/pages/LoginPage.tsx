@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { api } from '@/lib/axios'
+import { authApi } from '@/features/auth/api/authApi'
 import { Role } from '@/types/enums'
 import { Eye, EyeOff, Zap } from 'lucide-react'
 
@@ -19,7 +19,7 @@ export default function LoginPage() {
         setError('')
         setLoading(true)
         try {
-            const { data } = await api.post('/auth/login', { email, password })
+            const data = await authApi.login({ email, password })
             setAuth(data.user, data.accessToken)
             if (data.user.role === Role.CHOFER) navigate('/app/driver')
             else if (data.user.role === Role.SUPER_ADMIN) navigate('/app/superadmin')
@@ -38,7 +38,6 @@ export default function LoginPage() {
             nombre: 'Admin',
             apellido: 'Sistema',
             role: Role.SUPER_ADMIN,
-            tenantId: null
         }, 'dev-access-token')
         navigate('/app/superadmin')
     }

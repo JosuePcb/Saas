@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
     Plus, MoreVertical, Users, X, Check,
     Search, ChevronDown, Eye, EyeOff, Mail, Phone, Shield
 } from 'lucide-react'
 import { Role } from '@/types/enums'
+import { usersApi, CreateUserRequest, UpdateUserRequest } from '@/features/users/api/usersApi'
+import { UserResponse } from '@/features/auth/api/authApi'
 
 const F = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
@@ -17,17 +19,7 @@ const TEXT_SUB = 'rgba(200,190,255,0.55)'
 const INPUT_BG = 'rgba(255,255,255,0.06)'
 const INPUT_BD = 'rgba(255,255,255,0.10)'
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-const MOCK_USERS = [
-    { id: '1', nombre: 'Carlos', apellido: 'Rodríguez', email: 'carlos.r@empresa.com', telefono: '04121234567', role: Role.DESPACHADOR, activo: true, ordenesHoy: 12, activoDesde: '08:00 AM' },
-    { id: '2', nombre: 'Ana', apellido: 'Martínez', email: 'ana.m@empresa.com', telefono: '04141234567', role: Role.DESPACHADOR, activo: true, ordenesHoy: 8, activoDesde: '06:30 AM' },
-    { id: '3', nombre: 'Luis', apellido: 'Ramos', email: 'luis.r@empresa.com', telefono: '04261234567', role: Role.CHOFER, activo: true, ordenesHoy: 6, activoDesde: '07:00 AM' },
-    { id: '4', nombre: 'Elena', apellido: 'Gómez', email: 'elena.g@empresa.com', telefono: '04161234567', role: Role.DESPACHADOR, activo: true, ordenesHoy: 15, activoDesde: '09:15 AM' },
-    { id: '5', nombre: 'Pedro', apellido: 'Méndez', email: 'pedro.m@empresa.com', telefono: '04121111111', role: Role.CHOFER, activo: false, ordenesHoy: 0, activoDesde: '-' },
-    { id: '6', nombre: 'Roberto', apellido: 'Flynn', email: 'roberto.f@empresa.com', telefono: '04241234567', role: Role.CHOFER, activo: true, ordenesHoy: 5, activoDesde: '11:00 AM' },
-]
-
-type User = typeof MOCK_USERS[0]
+type User = UserResponse & { telefono?: string; ordenesHoy?: number; activoDesde?: string }
 type FilterType = 'TODOS' | Role.DESPACHADOR | Role.CHOFER | 'INACTIVOS'
 
 const EMPTY_FORM = { nombre: '', apellido: '', email: '', telefono: '', role: Role.DESPACHADOR as Role, password: '', activo: true }
@@ -248,7 +240,7 @@ function UserCard({ u, onEdit, onToggle, onDelete }: {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
                 <div style={{ padding: '8px 12px', borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER}` }}>
                     <p style={{ fontFamily: F, fontSize: 10, color: TEXT_SUB, margin: '0 0 2px 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Órdenes hoy</p>
-                    <p style={{ fontFamily: F, fontSize: 18, fontWeight: 800, color: u.ordenesHoy > 0 ? PINK : TEXT_SUB, margin: 0 }}>{u.ordenesHoy}</p>
+                    <p style={{ fontFamily: F, fontSize: 18, fontWeight: 800, color: (u.ordenesHoy ?? 0) > 0 ? PINK : TEXT_SUB, margin: 0 }}>{u.ordenesHoy ?? 0}</p>
                 </div>
                 <div style={{ padding: '8px 12px', borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER}` }}>
                     <p style={{ fontFamily: F, fontSize: 10, color: TEXT_SUB, margin: '0 0 2px 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Activo desde</p>
@@ -497,10 +489,27 @@ function UserSheet({ user, onClose, onSave }: {
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function UsersPage() {
-    const [users, setUsers] = useState(MOCK_USERS)
+    const [users, setUsers] = useState<User[]>([])
+    const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState<FilterType>('TODOS')
     const [search, setSearch] = useState('')
     const [sheet, setSheet] = useState<User | 'new' | null>(null)
+
+    useEffect(() => {
+        loadUsers()
+    }, [])
+
+    const loadUsers = async () => {
+        try {
+            setLoading(true)
+            const data = await usersApi.getAll()
+            setUsers(data.map(u => ({ ...u, ordenesHoy: 0, activoDesde: '-' })))
+        } catch (e) {
+            console.error('Error loading users:', e)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const filtered = users.filter(u => {
         const matchFilter =
@@ -523,17 +532,55 @@ export default function UsersPage() {
         inactivos: users.filter(u => !u.activo).length,
     }
 
-    const handleSave = (data: any) => {
-        if (sheet === 'new') {
-            setUsers(prev => [...prev, { ...data, id: Date.now().toString(), ordenesHoy: 0, activoDesde: '-' }])
-        } else {
-            setUsers(prev => prev.map(u => u.id === (sheet as User).id ? { ...u, ...data } : u))
+    const handleSave = async (data: any) => {
+        try {
+            if (sheet === 'new') {
+                const createData: CreateUserRequest = {
+                    email: data.email,
+                    password: data.password,
+                    nombre: data.nombre,
+                    apellido: data.apellido,
+                    role: data.role,
+                    phone: data.telefono,
+                }
+                await usersApi.create(createData)
+            } else {
+                const updateData: UpdateUserRequest = {
+                    nombre: data.nombre,
+                    apellido: data.apellido,
+                    email: data.email,
+                    activo: data.activo,
+                }
+                await usersApi.update((sheet as User).id, updateData)
+            }
+            await loadUsers()
+            setSheet(null)
+        } catch (e) {
+            console.error('Error saving user:', e)
         }
-        setSheet(null)
     }
 
-    const handleToggle = (id: string) => setUsers(prev => prev.map(u => u.id === id ? { ...u, activo: !u.activo } : u))
-    const handleDelete = (id: string) => { if (confirm('¿Eliminar este usuario?')) setUsers(prev => prev.filter(u => u.id !== id)) }
+    const handleToggle = async (id: string) => {
+        const user = users.find(u => u.id === id)
+        if (!user) return
+        try {
+            await usersApi.update(id, { activo: !user.activo })
+            setUsers(prev => prev.map(u => u.id === id ? { ...u, activo: !u.activo } : u))
+        } catch (e) {
+            console.error('Error toggling user:', e)
+        }
+    }
+
+    const handleDelete = async (id: string) => {
+        if (confirm('¿Eliminar este usuario?')) {
+            try {
+                await usersApi.delete(id)
+                setUsers(prev => prev.filter(u => u.id !== id))
+            } catch (e) {
+                console.error('Error deleting user:', e)
+            }
+        }
+    }
 
     const FILTERS: { key: FilterType; label: string; count: number; color: string }[] = [
         { key: 'TODOS', label: 'Todos', count: counts.total, color: TEXT_SUB },

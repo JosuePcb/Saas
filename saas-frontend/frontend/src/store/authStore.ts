@@ -8,7 +8,7 @@ interface User {
     nombre: string
     apellido: string
     role: Role
-    tenantId: string | null
+    activo?: boolean
 }
 
 interface AuthState {
